@@ -32,10 +32,6 @@ class ListScreenState extends State<ListScreen> {
     imagePath = pickedFile.path;
   }
 
-  // int getWasteCount(){
-  //   if(wasteCount)
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,10 +39,11 @@ class ListScreenState extends State<ListScreen> {
         centerTitle: true,
         title: Column(children: [
           const Text('Wasteagram'),
-          //Text('WasteCount: ' + wasteCount.toString()),
         ]),
       ),
-      body: PostList(/*wasteCount: wasteCount*/),
+
+      // PostList() is a listview of all "posts" stored in firebase
+      body: PostList(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Semantics(
         label: "New Post",
@@ -69,34 +66,28 @@ class ListScreenState extends State<ListScreen> {
 }
 
 class PostList extends StatefulWidget {
-  // final int wasteCount;
-  // PostList({this.wasteCount});
-
   @override
-  _PostListState createState() => _PostListState(/*wasteCount: wasteCount*/);
+  _PostListState createState() => _PostListState();
 }
 
 class _PostListState extends State<PostList> {
-  // int wasteCount;
-  // _PostListState({this.wasteCount});
-
   @override
   Widget build(BuildContext context) {
-    // ListScreenState appState =
-    //     context.findAncestorStateOfType<ListScreenState>();
 
     // Scrollable list view
     Widget _buildListItem(BuildContext context, Entry entry) {
-      print(entry.url);
       return Semantics(
         label: "Date: ${entry.date}",
+        // generate a ListTile for each entry passed into this function
         child: ListTile(
-            title: Row(children: [
-              Expanded(child: Text(entry.date)),
-              Text(entry.itemCount.toString()),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+              Text(entry.date),
+              Text('Items: ' + entry.itemCount.toString()),
             ]),
             onTap: () {
-              //print(entry.url);
+              // Navigate to post details when tapped
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -105,19 +96,28 @@ class _PostListState extends State<PostList> {
       );
     }
 
+
     return StreamBuilder(
+        // Stream of data the StreamBuilder is listening to
         stream: Firestore.instance.collection('posts').snapshots(),
+        // builder invoked whenever new data is acquired
+        // snapshot represents the potential value of a Future
         builder: (context, snapshot) {
           if (snapshot.hasData && !snapshot.data.documents.isEmpty) {
+            // If data, display in a listview
             return ListView.builder(
                 itemExtent: 80.0,
+                // itemcount is the number of "documents" in firebase
                 itemCount: snapshot.data.documents.length,
+                // generate tiles for each item in database via itembuilder 
+                // + buildList funct
                 itemBuilder: (context, index) {
+                  // use entry.dart class for data retrieval 
                   Entry entry = Entry(snapshot.data.documents[index]);
-                  //appState.wasteCount += entry.itemCount;
+                  // send context and entry obj to buildListItem funct
                   return _buildListItem(context, entry);
                 });
-          } else {
+          } else { // CircularProgressIndicator when no data in online storage
             return Center(child: CircularProgressIndicator());
           }
         });
